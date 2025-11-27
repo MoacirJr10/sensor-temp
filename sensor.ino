@@ -1,26 +1,34 @@
-/*
-  Estacao IoT - "Mascote Animado 2x"
-  Layout: Dados em cima, Status e Emoji ANIMADO (2 colunas) no rodapé.
-*/
-
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
 #include "DHT.h"
+#include <ThreeWire.h>
+#include <RtcDS1302.h>
 #include <ESP8266WiFi.h> 
 
 // --- Configurações ---
+// --- Configurações ---
 #define DHTPIN D4            
 #define DHTTYPE DHT11
+
+// Pinos do DS1302
+#define RTC_CLK D5  // GPIO14
+#define RTC_DAT D6  // GPIO12
+#define RTC_RST D7  // GPIO13
+
 LiquidCrystal_I2C lcd(0x27, 20, 4);
 DHT dht(DHTPIN, DHTTYPE);
+ThreeWire myWire(RTC_DAT, RTC_CLK, RTC_RST); // DAT, CLK, RST
+RtcDS1302<ThreeWire> rtc(myWire);
 
 #define INTERVALO_LEITURA 2000UL
 #define INTERVALO_ANIMACAO 500UL  // Troca de frame a cada 500ms
+#define INTERVALO_DATA 10000UL    // Atualiza data/hora a cada 10 segundos
 
 // --- Variáveis ---
 unsigned long ultimaLeitura = 0;
 unsigned long ultimaBoaLeitura = 0;
 unsigned long ultimaAnimacao = 0;
+unsigned long ultimaAtualizacaoData = 0;
 float tempAnterior = -999.0;
 float umidAnterior = -999.0;
 int errosConsecutivos = 0;
@@ -187,18 +195,68 @@ void desenhaBarraCompacta(float h) {
   lcd.print(F("]"));
 }
 
+void atualizarData() {
+  if (!rtc.IsDateTimeValid()) {
+    lcd.setCursor(13, 0);
+    lcd.print(F("--:--"));
+    lcd.setCursor(13, 1);
+    lcd.print(F("--/--"));
+    return;
+  }
+  
+  RtcDateTime now = rtc.GetDateTime();
+  
+  // Linha 0: Hora (HH:MM) - posições 13-17 (5 chars)
+  lcd.setCursor(13, 0);
+  if(now.Hour() < 10) lcd.print("0");
+  lcd.print(now.Hour());
+  lcd.print(":");
+  if(now.Minute() < 10) lcd.print("0");
+  lcd.print(now.Minute());
+  
+  // Linha 1: Data (DD/MM) - posições 13-17 (5 chars)
+  lcd.setCursor(13, 1);
+  if(now.Day() < 10) lcd.print("0");
+  lcd.print(now.Day());
+  lcd.print("/");
+  if(now.Month() < 10) lcd.print("0");
+  lcd.print(now.Month());
+}
+
 void setup() {
   Serial.begin(115200);
   lcd.init();
   lcd.backlight();
   criarPersonagens();
   dht.begin();
+  
+  // Inicializa RTC DS1302
+  rtc.Begin();
+  
+  // Verifica se o RTC está funcionando
+  if (!rtc.IsDateTimeValid()) {
+    Serial.println(F("RTC perdeu energia ou nao configurado!"));
+    
+    // Descomente a linha abaixo para configurar data/hora pela primeira vez
+    // Formato: ano, mes, dia, hora, minuto, segundo
+    // RtcDateTime compiled = RtcDateTime(2024, 11, 27, 14, 30, 0);
+    // rtc.SetDateTime(compiled);
+  }
+  
+  // Desabilita proteção de escrita
+  rtc.SetIsWriteProtected(false);
+  
+  // Habilita o RTC
+  rtc.SetIsRunning(true);
 
   lcd.clear();
   // Layout Estático
   lcd.setCursor(0, 0); lcd.print(F("Temp:"));
   lcd.setCursor(0, 1); lcd.print(F("Sens:"));
   lcd.setCursor(0, 2); lcd.print(F("Umid:"));
+  
+  // Exibe data na linha 0
+  atualizarData();
   
   // Carrega animação inicial e exibe status
   carregarAnimacao(BOM);
@@ -207,6 +265,12 @@ void setup() {
 
 void loop() {
   unsigned long atual = millis();
+
+  // Atualização da Data (a cada 1 minuto)
+  if (atual - ultimaAtualizacaoData >= INTERVALO_DATA) {
+    ultimaAtualizacaoData = atual;
+    atualizarData();
+  }
 
   // Animação do Emoji
   if (atual - ultimaAnimacao >= INTERVALO_ANIMACAO) {
