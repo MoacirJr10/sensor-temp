@@ -1,187 +1,151 @@
-Funcionalidades
-Sincronização automática de data/hora via WiFi e NTP.
-Exibição de temperatura (°C) com símbolo customizado.
-Umidade relativa com barra gráfica.
-Cálculo de sensação térmica.
-Deteção de níveis de conforto: IDEAL, FRIO, QUENTE, ÚMIDO, SECO.
-Relógio em tempo real (RTC) mantém hora mesmo sem internet.
-Configuração WiFi via Portal de Configuração (WiFiManager).
-Desliga WiFi após sincronização para economia de energia.
-Atualização dos dados a cada 2 segundos.
-Deteção e tratamento de falhas do sensor.
-Reinicialização automática em caso de travamento.
+# Estação de Monitoramento de Ambiente com ESP8266
 
-Componentes Utilizados:
+Projeto de uma estação meteorológica compacta baseada em ESP8266, com display LCD 20x4, que monitora temperatura, umidade e sensação térmica. O sistema sincroniza a hora via NTP e a mantém com um módulo RTC, garantindo funcionamento autônomo após a configuração inicial.
+
+## Funcionalidades
+
+- **Monitoramento:** Temperatura, umidade, e cálculo de sensação térmica.
+- **Análise de Conforto:** Classifica o ambiente como Ideal, Frio, Quente, Úmido ou Seco.
+- **Relógio:** Data e hora atualizadas via NTP e mantidas por um RTC (DS1302).
+- **Conectividade:** Configuração de rede simplificada via WiFiManager.
+- **Eficiência:** O WiFi é desativado após a sincronização para economizar energia.
+- **Display:** Interface clara em um LCD 20x4 com atualizações constantes.
+
+---
+
+## Hardware
+
+### Componentes Necessários
+
 | Componente              | Quantidade | Observações                |
 | ----------------------- | ---------- | -------------------------- |
-| Wemos D1 Mini (ESP8266) | 1          | Microcontrolador Wi-Fi     |
-| Sensor DHT11            | 1          | Temperatura e umidade      |
-| LCD 20x4 I2C            | 1          | Endereço padrão 0x27       |
-| RTC DS1302              | 1          | Relógio em tempo real      |
-| Bateria CR2032          | 1          | Para o módulo RTC          |
-| Jumpers                 | 10-12      | Conexões entre componentes |
-| Fonte 5V                | 1          | Via USB do Wemos           |
+| Wemos D1 Mini (ESP8266) | 1          | Microcontrolador com Wi-Fi |
+| Sensor DHT11            | 1          | Medidor de temperatura e umidade |
+| LCD 20x4 I2C            | 1          | Endereço I2C padrão: `0x27` |
+| Módulo RTC DS1302       | 1          | Relógio de tempo real      |
+| Bateria CR2032          | 1          | Para alimentar o RTC       |
+| Jumpers                 | ~12        | Para as conexões           |
 
-Ligações dos Componentes:
-| DHT11 | Wemos D1 Mini |
-| ----- | ------------- |
-| VCC   | 5V            |
-| GND   | GND           |
-| DATA  | D4 (GPIO2)    |
+### Montagem e Conexões
 
-LCD I2C → Wemos D1 Mini
-| LCD I2C | Wemos D1 Mini |
-| ------- | ------------- |
-| VCC     | 5V            |
-| GND     | GND           |
-| SDA     | D2 (GPIO4)    |
-| SCL     | D1 (GPIO5)    |
+**Sensor DHT11**
+| Pino | Wemos D1 Mini |
+| ---- | ------------- |
+| VCC  | 5V            |
+| GND  | GND           |
+| DATA | D4 (GPIO2)    |
 
-RTC DS1302 → Wemos D1 Mini
-| DS1302 | Wemos D1 Mini |
-| ------ | ------------- |
-| VCC    | 5V            |
-| GND    | GND           |
-| CLK    | D5 (GPIO14)   |
-| DAT    | D6 (GPIO12)   |
-| RST    | D7 (GPIO13)   |
+**Display LCD I2C**
+| Pino | Wemos D1 Mini |
+| ---- | ------------- |
+| VCC  | 5V            |
+| GND  | GND           |
+| SDA  | D2 (GPIO4)    |
+| SCL  | D1 (GPIO5)    |
 
-Bibliotecas Necessárias
-Instalar via Gerenciador de Bibliotecas do Arduino IDE:
-DHT sensor library por Adafruit
-Adafruit Unified Sensor (dependência do DHT)
-LiquidCrystal I2C por Frank de Brabander
-Rtc by Makuna (para DS1302/DS3231)
-WiFiManager por tzapu
+**Módulo RTC DS1302**
+| Pino | Wemos D1 Mini |
+| ---- | ------------- |
+| VCC  | 5V            |
+| GND  | GND           |
+| CLK  | D5 (GPIO14)   |
+| DAT  | D6 (GPIO12)   |
+| RST  | D7 (GPIO13)   |
 
-Configuração da IDE Arduino
-Placa: LOLIN(WEMOS) D1 R2 & mini
-Velocidade de upload: 115200
-Flash size: 4MB (FS: 1MB OTA: ~1019KB)
-Porta: Selecione a porta COM do Wemos
+---
 
-Configuração Inicial:
+## Case para Impressão 3D
 
-1. Primeira Execução
-Ao ligar, cria um ponto de acesso WiFi ESTACAO-IOT (senha: 12345678)
-Conecte-se e acesse 192.168.4.1 no navegador
-Selecione sua rede WiFi e senha
-Sistema sincroniza via NTP e grava a hora no RTC
-WiFi será desligado para economia de energia
-Funcionamento normal usando apenas o RTC
+Uma case foi modelada para acondicionar os componentes, conferindo um acabamento limpo e profissional ao projeto.
 
-2. Ajuste Manual do RTC (Opcional)
+### Imagens
 
-No código, dentro da função setup(), descomente:
-// Para configuração manual, ajuste abaixo:
-// RtcDateTime manual(2024, 11, 27, 16, 00, 00);
-// rtc.SetDateTime(manual);
+| Vista 3D                               | Componentes Montados                   | Projeto Finalizado                     |
+| :------------------------------------: | :------------------------------------: | :------------------------------------: |
+| ![Render da Case](Case3D/case.jpeg) | ![Montagem Interna](Case3D/Img1.jpeg) | ![Case Finalizada](Case3D/Img2.jpeg) |
 
-Faça upload, depois comente novamente e reenvie o código
-Bateria CR2032 mantém a hora mesmo sem alimentação
-Sequência de Inicialização
-Tela Inicial: Estacao IoT vFinal
-Conectando WiFi: Conectando WiFi...
-Portal de Configuração (se necessário):
-CONFIGURE O WIFI
-1- Conecte-se a: ESTACAO-IOT
-2- Abra 192.168.4.1
+### Arquivos de Impressão
 
-Sincronização: 
-WiFi Conectado!
+Os arquivos `.stl` para impressão 3D estão localizados na pasta `/Case3D/stl`:
+- `case_base.stl`: Corpo principal da case.
+- `tampa.stl`: Tampa traseira.
 
-[Nome da rede]
+---
 
-Hora via NTP: Hora via net... OK
+## Configuração do Software
 
-Tela Normal:
+### Bibliotecas para Arduino IDE
 
-Temp:  25.5°   14:35
+Instale as seguintes bibliotecas através do "Library Manager":
+- `DHT sensor library` por Adafruit
+- `Adafruit Unified Sensor` (dependência da biblioteca DHT)
+- `LiquidCrystal I2C` por Frank de Brabander
+- `Rtc by Makuna`
+- `WiFiManager` por tzapu
 
-Sens:  26.3°   27/11
+### Configurações da Placa
 
-Umid: 65% [■■■■..]
+- **Placa:** LOLIN(WEMOS) D1 R2 & mini
+- **Flash Size:** 4MB (FS: 1MB OTA: ~1019KB)
+- **Porta:** Selecione a porta COM correspondente ao seu Wemos D1 Mini.
 
-Status: IDEAL ❤️
+### Instruções de Uso
 
-Layout do Display
-| Linha | Conteúdo                                                           |
-| ----- | ------------------------------------------------------------------ |
-| 0     | Temperatura + °C (0-12) / Hora HH:MM (14-18)                       |
-| 1     | Sensação térmica (0-12) / Data DD/MM (14-18)                       |
-| 2     | Umidade % (0-9) + barra gráfica de 6 blocos (11-18)                |
-| 3     | "Status:" fixo (0-6) / Conforto térmico (8-17) / Indicador (18-19) |
+1.  **Primeira Inicialização:**
+    - Ao ser ligado, o dispositivo criará um ponto de acesso Wi-Fi chamado **"ESTACAO-IOT"** (senha: `12345678`).
+    - Conecte-se a esta rede e acesse `192.168.4.1` em um navegador.
+    - Selecione sua rede Wi-Fi local e insira a senha.
+    - O sistema irá sincronizar a hora via NTP, gravá-la no RTC e desligar o Wi-Fi.
 
+2.  **Ajuste Manual do RTC (Opcional):**
+    - Se precisar definir a hora manualmente, descomente o seguinte trecho no `setup()` do código:
+      ```cpp
+      // RtcDateTime manual(2024, 11, 27, 16, 00, 00); // Ano, Mês, Dia, Hora, Min, Seg
+      // rtc.SetDateTime(manual);
+      ```
+    - Faça o upload do código, e depois comente as linhas novamente e faça o upload mais uma vez para retornar ao modo de operação normal.
 
-Critérios de Conforto Térmico
-| Condição | Temperatura  | Umidade | Texto Exibido |
-| -------- | ------------ | ------- | ------------- |
-| FRIO     | <16°C        | -       | FRIO          |
-| QUENTE   | >29°C        | -       | QUENTE        |
-| SECO     | -            | <30%    | MTO SECO      |
-| ÚMIDO    | -            | >75%    | MTO UMID      |
-| IDEAL    | 18-26°C      | 40-60%  | IDEAL         |
-| NORMAL   | Demais casos | -       | NORMAL        |
+---
 
+## Detalhes de Funcionamento
 
-Intervalos de Atualização
-Sensor DHT11: a cada 2 segundos
-Data e hora: a cada 10 segundos
-Animação do status: a cada 500ms
-Sincronização NTP: apenas na inicialização
- Recursos Técnicos
-Sincronização NTP (pool.ntp.org, UTC-3, timeout 20s)
-WiFi desligado após sincronização
-Atualização inteligente do display (evita flicker)
-Formatação consistente via snprintf()
-Detecção de falhas no DHT11 (ERRO DHT → reinício automático)
-Fallback para RTC se WiFi/NTP falhar
-WiFiManager permite configurar sem recompilar
-Possíveis Expansões
-Servidor web para visualização remota
-Envio de dados para ThingSpeak, Blynk
-Integração Home Assistant via MQTT
-Sensores extras: pressão, luminosidade, CO₂
-Logs históricos em cartão SD
-Alarmes programáveis
-Gráficos de tendências
-Controle de dispositivos baseado em condições
-Solução de Problemas
-Display não acende: verifique SDA/SCL, endereço I2C e contraste
-DHT11 erro: aguarde 2s entre leituras, verifique D4
-RTC não mantém hora: confira bateria CR2032 e conexões CLK/DAT/RST
-Portal WiFi não aparece: use wm.resetSettings() ou pressione RESET
-Data/hora piscando: use versão mais recente do código
-Caracteres estranhos no LCD: verifique endereço I2C e conexões
-Estrutura do Código
-Includes e configurações
-Configuração WiFi/NTP (WiFiManager)
-Variáveis globais
-Bitmaps customizados
-Funções auxiliares (conforto, barra gráfica)
-Funções de rede (WiFi, NTP)
-Setup (inicialização com feedback)
-Loop principal (atualizações e animações)
+### Layout do Display
 
-Consumo de Memória
-RAM: ~30KB / 80KB (38%)
-Flash: ~270KB / 1MB (26%)
-IRAM: ~29KB / 32KB (91%)
+| Linha | Conteúdo (Coluna 0-19)                                     |
+| :---: | ---------------------------------------------------------- |
+|   1   | `Temp: 25.5°` e `14:35`                                    |
+|   2   | `Sens: 26.3°` e `27/11`                                    |
+|   3   | `Umid: 65%` e uma barra de progresso gráfica               |
+|   4   | `Status: IDEAL`                                            |
 
-Autor
-Moacir Pereira
-Projeto pessoal de automação IoT e monitoramento ambiental
-Atualizado em: Novembro/2024
+### Critérios de Conforto Térmico
 
-Licença
-Código aberto sob MIT License. Use, modifique e compartilhe livremente.
-Agradecimentos
-Adafruit (DHT)
-Makuna (RTC)
-tzapu (WiFiManager)
-Comunidade ESP8266/Arduino
+| Condição | Temperatura | Umidade | Status no Display |
+| :--- | :--- | :--- | :--- |
+| **Frio** | < 16°C | - | `FRIO` |
+| **Quente** | > 29°C | - | `QUENTE` |
+| **Seco** | - | < 30% | `MTO SECO` |
+| **Úmido** | - | > 75% | `MTO UMIDO` |
+| **Ideal** | 18-26°C | 40-60% | `IDEAL` |
+| **Normal** | Outros casos | - | `NORMAL` |
 
-Suporte
-Verifique a seção de problemas e soluções
-Consulte issues no repositório
-Contato via comunidade ESP8266
+---
+
+## Solução de Problemas
+
+- **Display não liga:** Verifique as conexões SDA/SCL, o endereço I2C e o contraste do LCD.
+- **Erro no sensor DHT:** Certifique-se de que o pino de dados está conectado a D4 e que há um intervalo de 2 segundos entre as leituras.
+- **RTC não salva a hora:** Verifique a bateria CR2032 e as conexões CLK/DAT/RST.
+- **Portal Wi-Fi não aparece:** Pressione o botão de reset ou utilize a função `wm.resetSettings()` no código para forçar a reconfiguração.
+
+---
+
+## Autor
+
+**Moacir Pereira**
+- Projeto pessoal de automação e monitoramento de ambiente.
+- Atualizado em: Novembro de 2024.
+
+## Licença
+
+Este projeto é distribuído sob a licença MIT. Sinta-se à vontade para usar, modificar e compartilhar.
