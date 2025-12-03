@@ -3,12 +3,12 @@ Sincronização automática de data/hora via WiFi e NTP.
 Exibição de temperatura (°C) com símbolo customizado.
 Umidade relativa com barra gráfica.
 Cálculo de sensação térmica.
-Detecção de níveis de conforto: IDEAL, FRIO, QUENTE, ÚMIDO, SECO.
+Deteção de níveis de conforto: IDEAL, FRIO, QUENTE, ÚMIDO, SECO.
 Relógio em tempo real (RTC) mantém hora mesmo sem internet.
 Configuração WiFi via Portal de Configuração (WiFiManager).
 Desliga WiFi após sincronização para economia de energia.
 Atualização dos dados a cada 2 segundos.
-Detecção e tratamento de falhas do sensor.
+Deteção e tratamento de falhas do sensor.
 Reinicialização automática em caso de travamento.
 
 Componentes Utilizados:
