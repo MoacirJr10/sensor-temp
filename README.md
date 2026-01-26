@@ -1,151 +1,159 @@
-# Estação de Monitoramento de Ambiente com ESP8266
-
-Projeto de uma estação meteorológica compacta baseada em ESP8266, com display LCD 20x4, que monitora temperatura, umidade e sensação térmica. O sistema sincroniza a hora via NTP e a mantém com um módulo RTC, garantindo funcionamento autônomo após a configuração inicial.
-
-## Funcionalidades
-
-- **Monitoramento:** Temperatura, umidade, e cálculo de sensação térmica.
-- **Análise de Conforto:** Classifica o ambiente como Ideal, Frio, Quente, Úmido ou Seco.
-- **Relógio:** Data e hora atualizadas via NTP e mantidas por um RTC (DS1302).
-- **Conectividade:** Configuração de rede simplificada via WiFiManager.
-- **Eficiência:** O WiFi é desativado após a sincronização para economizar energia.
-- **Display:** Interface clara em um LCD 20x4 com atualizações constantes.
+# Estação Híbrida de Monitoramento
+### Monitoramento de Ar e Aquário com ESP8266
 
 ---
 
-## Hardware
+## Visão Geral
+Estação de monitoramento inteligente baseada no **ESP8266 (Wemos D1 Mini)**, capaz de medir:
 
-### Componentes Necessários
+-  Temperatura e umidade do ar (DHT11)
+-  Temperatura da água do aquário (DS18B20)
+-  Hora e data (RTC + NTP)
+-  Status de conexão WiFi
 
-| Componente              | Quantidade | Observações                |
-| ----------------------- | ---------- | -------------------------- |
-| Wemos D1 Mini (ESP8266) | 1          | Microcontrolador com Wi-Fi |
-| Sensor DHT11            | 1          | Medidor de temperatura e umidade |
-| LCD 20x4 I2C            | 1          | Endereço I2C padrão: `0x27` |
-| Módulo RTC DS1302       | 1          | Relógio de tempo real      |
-| Bateria CR2032          | 1          | Para alimentar o RTC       |
-| Jumpers                 | ~12        | Para as conexões           |
+Todas as informações são exibidas em um **display LCD 20x4**.
 
-### Montagem e Conexões
+---
+## Conexões Elétricas
 
-**Sensor DHT11**
-| Pino | Wemos D1 Mini |
-| ---- | ------------- |
-| VCC  | 5V            |
-| GND  | GND           |
-| DATA | D4 (GPIO2)    |
-
-**Display LCD I2C**
-| Pino | Wemos D1 Mini |
-| ---- | ------------- |
-| VCC  | 5V            |
-| GND  | GND           |
-| SDA  | D2 (GPIO4)    |
-| SCL  | D1 (GPIO5)    |
-
-**Módulo RTC DS1302**
-| Pino | Wemos D1 Mini |
-| ---- | ------------- |
-| VCC  | 5V            |
-| GND  | GND           |
-| CLK  | D5 (GPIO14)   |
-| DAT  | D6 (GPIO12)   |
-| RST  | D7 (GPIO13)   |
+| Componente            | Pino do Componente | Pino no Wemos D1 Mini | Nota Importante                     |
+| --------------------- | ------------------ | --------------------- | ----------------------------------- |
+| **DS18B20 (Aquário)** | VCC (Vermelho)     | 3.3V                  | Resistor **4.7kΩ** entre VCC e DATA |
+|                       | GND (Preto)        | GND                   | —                                   |
+|                       | DATA (Amarelo)     | D3                    | Protocolo **OneWire**               |
+| **DHT11 (Ar)**        | VCC                | 3.3V ou 5V            | Funciona em ambas tensões           |
+|                       | GND                | GND                   | —                                   |
+|                       | DATA               | D4                    | —                                   |
+| **LCD 20x4 I2C**      | VCC                | 5V                    | Melhor contraste                    |
+|                       | GND                | GND                   | —                                   |
+|                       | SDA                | D2                    | Comunicação I2C                     |
+|                       | SCL                | D1                    | Comunicação I2C                     |
+| **RTC DS1302**        | VCC                | 5V ou 3.3V            | Depende do módulo                   |
+|                       | GND                | GND                   | —                                   |
+|                       | CLK                | D5                    | Clock                               |
+|                       | DAT                | D6                    | Dados                               |
+|                       | RST                | D7                    | Reset                               |
 
 ---
 
-## Case para Impressão 3D
+##  Galeria do Projeto
+###  Case
+<p align="center">
+  <img src="Case3D/case.jpeg" width="45%">
+  <img src="Case3D/case1.jpeg" width="45%">
+</p>
 
-Uma case foi modelada para acondicionar os componentes, conferindo um acabamento limpo e profissional ao projeto.
-
-### Imagens
-
-| Vista 3D                               | Componentes Montados                   | Projeto Finalizado                     |
-| :------------------------------------: | :------------------------------------: | :------------------------------------: |
-| ![Render da Case](Case3D/case.jpeg) | ![Montagem Interna](Case3D/Img1.jpeg) | ![Case Finalizada](Case3D/Img2.jpeg) |
-
-### Arquivos de Impressão
-
-Os arquivos `.stl` para impressão 3D estão localizados na pasta `/Case3D/stl`:
-- `case_base.stl`: Corpo principal da case.
-- `tampa.stl`: Tampa traseira.
+###  Detalhes 
+<p align="center">
+  <img src="Case3D/Img1.jpeg" width="45%">
+  <img src="Case3D/Img2.jpeg" width="45%">
+</p>
 
 ---
 
-## Configuração do Software
+##  Componentes Utilizados
 
-### Bibliotecas para Arduino IDE
-
-Instale as seguintes bibliotecas através do "Library Manager":
-- `DHT sensor library` por Adafruit
-- `Adafruit Unified Sensor` (dependência da biblioteca DHT)
-- `LiquidCrystal I2C` por Frank de Brabander
-- `Rtc by Makuna`
-- `WiFiManager` por tzapu
-
-### Configurações da Placa
-
-- **Placa:** LOLIN(WEMOS) D1 R2 & mini
-- **Flash Size:** 4MB (FS: 1MB OTA: ~1019KB)
-- **Porta:** Selecione a porta COM correspondente ao seu Wemos D1 Mini.
-
-### Instruções de Uso
-
-1.  **Primeira Inicialização:**
-    - Ao ser ligado, o dispositivo criará um ponto de acesso Wi-Fi chamado **"ESTACAO-IOT"** (senha: `12345678`).
-    - Conecte-se a esta rede e acesse `192.168.4.1` em um navegador.
-    - Selecione sua rede Wi-Fi local e insira a senha.
-    - O sistema irá sincronizar a hora via NTP, gravá-la no RTC e desligar o Wi-Fi.
-
-2.  **Ajuste Manual do RTC (Opcional):**
-    - Se precisar definir a hora manualmente, descomente o seguinte trecho no `setup()` do código:
-      ```cpp
-      // RtcDateTime manual(2024, 11, 27, 16, 00, 00); // Ano, Mês, Dia, Hora, Min, Seg
-      // rtc.SetDateTime(manual);
-      ```
-    - Faça o upload do código, e depois comente as linhas novamente e faça o upload mais uma vez para retornar ao modo de operação normal.
+| Componente | Função |
+|-----------|-------|
+| Wemos D1 Mini (ESP8266) | Processamento e WiFi |
+| Sensor DHT11 | Temperatura e umidade do ar |
+| Sensor DS18B20 | Temperatura da água |
+| Display LCD 20x4 I2C | Interface visual |
+| RTC DS1302 | Data e hora |
+| Resistor 4.7kΩ | Pull-up do DS18B20 |
 
 ---
 
-## Detalhes de Funcionamento
+##  Layout do Display LCD
 
-### Layout do Display
-
-| Linha | Conteúdo (Coluna 0-19)                                     |
-| :---: | ---------------------------------------------------------- |
-|   1   | `Temp: 25.5°` e `14:35`                                    |
-|   2   | `Sens: 26.3°` e `27/11`                                    |
-|   3   | `Umid: 65%` e uma barra de progresso gráfica               |
-|   4   | `Status: IDEAL`                                            |
-
-### Critérios de Conforto Térmico
-
-| Condição | Temperatura | Umidade | Status no Display |
-| :--- | :--- | :--- | :--- |
-| **Frio** | < 16°C | - | `FRIO` |
-| **Quente** | > 29°C | - | `QUENTE` |
-| **Seco** | - | < 30% | `MTO SECO` |
-| **Úmido** | - | > 75% | `MTO UMIDO` |
-| **Ideal** | 18-26°C | 40-60% | `IDEAL` |
-| **Normal** | Outros casos | - | `NORMAL` |
+| Linha | Conteúdo |
+|-----|---------|
+| Linha 1 |  Temp. do Ar +  Hora |
+| Linha 2 |  Temp. da Água +  Data |
+| Linha 3 |  Umidade (%) + Barra |
+| Linha 4 | Conforto +  WiFi + Emoji |
 
 ---
 
-## Solução de Problemas
+##  Pinagem – Wemos D1 Mini
 
-- **Display não liga:** Verifique as conexões SDA/SCL, o endereço I2C e o contraste do LCD.
-- **Erro no sensor DHT:** Certifique-se de que o pino de dados está conectado a D4 e que há um intervalo de 2 segundos entre as leituras.
-- **RTC não salva a hora:** Verifique a bateria CR2032 e as conexões CLK/DAT/RST.
-- **Portal Wi-Fi não aparece:** Pressione o botão de reset ou utilize a função `wm.resetSettings()` no código para forçar a reconfiguração.
+| Pino | Ligação |
+|----|--------|
+| D1 (SCL) | LCD I2C |
+| D2 (SDA) | LCD I2C |
+| D3 | DS18B20 (4.7kΩ → 3.3V) |
+| D4 | DHT11 |
+| D5 | RTC CLK |
+| D6 | RTC DAT |
+| D7 | RTC RST |
 
 ---
 
-## Autor
+##  WiFi – Funcionamento Inteligente
 
-**Moacir Pereira**
-- Projeto pessoal de automação e monitoramento de ambiente.
-- Atualizado em: Novembro de 2024.
+| Recurso | Descrição |
+|------|----------|
+| AP Temporário | `ESTACAO_AQUARIO` |
+| Portal Ativo | 60 segundos |
+| Modo Offline | Funciona sem WiFi |
+| Reconexão | A cada 10 segundos |
 
-## Licença
+---
 
-Este projeto é distribuído sob a licença MIT. Sinta-se à vontade para usar, modificar e compartilhar.
+##  Análise de Conforto
+
+###  Temperatura do Ar
+| Estado | Faixa |
+|-----|------|
+| FRIO | < 16 °C |
+| NORMAL | 16–29 °C |
+| QUENTE | > 29 °C |
+
+###  Umidade
+| Estado | Faixa |
+|-----|------|
+| Muito seco | < 30% |
+| Normal | 30–75% |
+| Muito úmido | > 75% |
+
+---
+
+##  Arquivos STL – Impressão 3D
+
+ **Local:** `Case3D/stl/`
+
+| Arquivo | Descrição |
+|------|----------|
+| [`ArduBody.stl`](Case3D/stl/ArduBody.stl) | Corpo da estação |
+| [`ArduLcdCover.stl`](Case3D/stl/ArduLcdCover.stl) | Moldura do LCD |
+
+ Recomendações:
+- Material: PLA ou PETG
+- Infill: 20–30%
+- Camada: 0.2 mm
+
+---
+
+##  Bibliotecas Necessárias
+
+- DHT sensor library
+- LiquidCrystal I2C
+- Rtc by Makuna
+- WiFiManager
+- DallasTemperature
+- OneWire
+
+---
+
+##  Instalação
+
+1. Monte o hardware conforme a pinagem
+2. Instale as bibliotecas
+3. Grave o arquivo `sensor-temp.ino`
+4. Ligue o sistema e configure o WiFi se desejar
+
+---
+
+##  Autor
+**Moacir Pereira**  
+ Eletrônica • Automação • Impressão 3D
