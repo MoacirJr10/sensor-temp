@@ -96,7 +96,7 @@ void setup() {
   wm.setConfigPortalTimeout(180);
   wm.setBreakAfterConfig(true);
   wm.setDebugOutput(false);
-  wm.autoConnect("ESTACAO_AQUARIO");
+  if (!wm.autoConnect("ESTACAO_AQUARIO")) Serial.println("WiFi indisponivel; usando RTC local.");
 
   // --- RTC ---
   rtc.Begin();
@@ -125,30 +125,33 @@ void loop() {
     float tAgua = sensors.getTempCByIndex(0);
     float tAr   = dht.readTemperature();
     float h     = dht.readHumidity();
-    float stAr  = dht.computeHeatIndex(tAr, h, false);
+    bool arValido = isfinite(tAr) && isfinite(h) && h >= 0 && h <= 100;
+    bool aguaValida = isfinite(tAgua) && tAgua != DEVICE_DISCONNECTED_C && tAgua >= -55 && tAgua <= 125;
+    float stAr = arValido ? dht.computeHeatIndex(tAr, h, false) : NAN;
+    for (byte row = 0; row < 4; row++) { lcd.setCursor(0, row); lcd.print("                    "); }
 
     lcd.setCursor(0, 0);
     lcd.print("Ar  : ");
-    lcd.print(tAr, 1); lcd.write(7); lcd.print("C");
+    if (arValido) { lcd.print(tAr, 1); lcd.write(7); lcd.print("C"); } else lcd.print("ERR");
 
     lcd.setCursor(0, 1);
     lcd.print("Aqua: ");
-    if (tAgua > -50) {
+    if (aguaValida) {
       lcd.print(tAgua, 1); lcd.write(7); lcd.print("C");
     } else lcd.print("ERR");
 
     lcd.setCursor(0, 2);
     lcd.print("Umid: ");
-    lcd.print((int)h); lcd.print("%");
+    if (arValido) { lcd.print((int)h); lcd.print("%"); } else lcd.print("ERR");
     if (h > 75) lcd.write(3); else lcd.print(" ");
 
     lcd.setCursor(12, 2);
     lcd.print("ST:");
-    lcd.print(stAr, 0); lcd.write(7);
+    if (arValido && isfinite(stAr)) { lcd.print(stAr, 0); lcd.write(7); } else lcd.print("ERR");
 
     lcd.setCursor(0, 3);
     lcd.print("Status: ");
-    if (tAr > 29) {
+    if (!arValido || !aguaValida) { lcd.print("FALHA"); } else if (tAr > 29) {
       lcd.print("QUENTE "); lcd.write(1);
     } else if (tAr < 18) {
       lcd.print("FRIO   "); lcd.write(2);
@@ -158,8 +161,10 @@ void loop() {
 
     RtcDateTime now = rtc.GetDateTime();
     char hStr[6], dStr[6];
-    snprintf(hStr, sizeof(hStr), "%02d:%02d", now.Hour(), now.Minute());
-    snprintf(dStr, sizeof(dStr), "%02d/%02d", now.Day(), now.Month());
+    if (rtc.IsDateTimeValid() && rtc.GetIsRunning()) {
+      snprintf(hStr, sizeof(hStr), "%02d:%02d", now.Hour(), now.Minute());
+      snprintf(dStr, sizeof(dStr), "%02d/%02d", now.Day(), now.Month());
+    } else { strcpy(hStr, "--:--"); strcpy(dStr, "--/--"); }
 
     lcd.setCursor(15, 0); lcd.print(hStr);
     lcd.setCursor(15, 1); lcd.print(dStr);
